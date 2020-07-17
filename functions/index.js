@@ -2,6 +2,7 @@ const functions = require('firebase-functions');
 
 const app = require('express')();
 
+const { getAllScreams, postOneScream } = require('./handlers/screams');
 
 const firebaseConfig = {
     apiKey: "AIzaSyA2FPyNJSN_2VN7tGYW3YrtS5JpzfJNqMc",
@@ -18,26 +19,10 @@ const firebase = require('firebase');
 firebase.initializeApp(firebaseConfig);
 
 
-
-app.get('/screams', (req, res) => {
-    db
-        .collection('screams')
-        .orderBy('createdAt', 'desc')
-        .get()
-        .then(data => {
-            let screams = [];
-            data.forEach(doc => {
-            screams.push({
-                screamId: doc.id,
-                body: doc.data().body,
-                userHandle: doc.data().userHandle,
-                createdAt: doc.data().createdAt 
-            });
-        });
-        return res.json(screams);
-    })
-    .catch(err => console.error(err));
-});
+// Screams route
+app.get('/screams', getAllScreams);
+// Post one scream
+app.post('/scream', FBAuth, postOneScream);
 
 const  FBAuth = (req, res, next) => {
     if(req.headers.authorization && req.headers.authorization.startsWith('Bearer ')){
@@ -66,29 +51,7 @@ const  FBAuth = (req, res, next) => {
         })
 }
 
-// Post one scream
-app.post('/scream', FBAuth, (req, res) => {
-    if (req.body.body.trim() === '') {
-        return res.status(400).json({ body: 'Body must not be empty' });
-    }
 
-    const newScream = {
-        body: req.body.body,
-        userHandle: req.user.handle,
-        createdAt: new Date().toISOString()
-    };
-
-    db
-        .collection('screams')
-        .add(newScream)
-        .then(doc => {
-            res.json({ message: `document ${doc.id} created successfully`});
-        })
-        .catch(err => {
-            res.status(500).json({ error: 'something went wrong'});
-            console.error(err);
-        })
-});
 
 const isEmail = (email) => {
     const regEx = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
