@@ -1,7 +1,7 @@
 const functions = require('firebase-functions');
-const admin = require('firebase-admin');
+
 const app = require('express')();
-admin.initializeApp();
+
 
 const firebaseConfig = {
     apiKey: "AIzaSyA2FPyNJSN_2VN7tGYW3YrtS5JpzfJNqMc",
@@ -17,7 +17,7 @@ const firebaseConfig = {
 const firebase = require('firebase');
 firebase.initializeApp(firebaseConfig);
 
-const db = admin.firestore();
+
 
 app.get('/screams', (req, res) => {
     db
