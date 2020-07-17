@@ -28,7 +28,9 @@ exports.postOneScream = (req, res) => {
     const newScream = {
         body: req.body.body,
         userHandle: req.user.handle,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        likeCount: 0,
+        commentCount: 0
     };
 
     db
