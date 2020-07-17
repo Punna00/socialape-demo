@@ -3,17 +3,7 @@ const functions = require('firebase-functions');
 const app = require('express')();
 
 const { getAllScreams, postOneScream } = require('./handlers/screams');
-
-const firebaseConfig = {
-    apiKey: "AIzaSyA2FPyNJSN_2VN7tGYW3YrtS5JpzfJNqMc",
-    authDomain: "socialape-13440.firebaseapp.com",
-    databaseURL: "https://socialape-13440.firebaseio.com",
-    projectId: "socialape-13440",
-    storageBucket: "socialape-13440.appspot.com",
-    messagingSenderId: "51136174000",
-    appId: "1:51136174000:web:a9ad4dbd9224abcc95a875",
-    measurementId: "G-SSVSJDRZVK"
-};
+const { signup, login } = require('./handlers/users');
 
 const firebase = require('firebase');
 firebase.initializeApp(firebaseConfig);
@@ -21,8 +11,11 @@ firebase.initializeApp(firebaseConfig);
 
 // Screams route
 app.get('/screams', getAllScreams);
-// Post one scream
 app.post('/scream', FBAuth, postOneScream);
+
+// users route
+app.post('/signup', signup);
+app.post('/login', login);
 
 const  FBAuth = (req, res, next) => {
     if(req.headers.authorization && req.headers.authorization.startsWith('Bearer ')){
@@ -63,94 +56,6 @@ const isEmpty = (string) => {
     else return false;
 }
 
-// Signup route
-app.post('/signup', (req, res) => {
-    const newUser = {
-        email: req.body.email,
-        password: req.body.password,
-        confirmPassword: req.body.confirmPassword,
-        handle: req.body.handle
-    };
 
-    let errors = {};
-
-    if(isEmpty(newUser.email)) {
-        errors.email = 'Must not be empty'
-    } else if(!isEmail(newUser.email)){
-        errors.email = 'Must be a valid email address'
-    }
-
-    if(isEmpty(newUser.password)) errors.password = 'Must not be empty';
-    if(newUser.password !== newUser.confirmPassword) errors.confirmPassword = 'Passwords must match';
-    if(isEmpty(newUser.handle)) errors.handle = 'Must not be empty';
-
-    if(Object.keys(errors).length > 0) return res.status(400).json(errors);
-
-    // TODO: validate date
-    let token, userId;
-    db.doc(`/users/${newUser.handle}`).get()
-        .then(doc => {
-            if(doc.exists){
-                return res.status(400).json({ handle: 'this handle is already taken' });
-            } else {
-                return firebase
-                    .auth()
-                    .createUserWithEmailAndPassword(newUser.email, newUser.password);
-            }
-        })
-        .then(data => {
-            userId = data.user.uid;
-            return data.user.getIdToken();            
-        })
-        .then(idToken => {
-            token = idToken;
-            const userCredentials = {
-                handle: newUser.handle,
-                email: newUser.email,
-                createdAt: new Date().toISOString(),
-                userId
-            };
-            return db.doc(`/users/${newUser.handle}`).set(userCredentials);
-        })
-        .then(() => {
-            return res.status(201).json({ token });
-        })
-        .catch(err => {
-            console.error(err);
-            if(err.code === 'auth/email-already-in-use'){
-                return res.status(400).json({ email: 'Email is already is use' });
-            } else {
-                return res.status(500).json({ error: err.code });
-            }
-        });
-});
-
-app.post('/login', (req, res) => {
-    const user = {
-        email: req.body.email,
-        password: req.body.password
-    };
-
-    let errors = {};
-
-    if(isEmpty(user.email)) errors.email = 'Must not be empty';
-    if(isEmpty(user.password)) errors.password = 'Must not be empty';
-
-    if(Object.keys(errors).length > 0) return res.status(400).json(errors);
-
-    firebase.auth().signInWithEmailAndPassword(user.email, user.password)
-        .then(data => {
-            return data.user.getIdToken();
-        })
-        .then(token => {
-            return res.json({ token });
-        })
-        .catch(err => {
-            console.error(err);
-            if(err.code === 'auth/wrong-password') {
-                return res.status(403).json({ general: 'Wrong credentials, please try again' });
-            } else return res.status(500).json({ error: err.code });
-        });
-});
 
 exports.api = functions.https.onRequest(app);
