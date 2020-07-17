@@ -86,9 +86,12 @@ app.post('/signup', (req, res) => {
         })
         .catch(err => {
             console.error(err);
-            return res.status(500).json({ error: err.code });
+            if(err.code === 'auth/email-already-in-use'){
+                return res.status(400).json({ email: 'Email is already is use' });
+            } else {
+                return res.status(500).json({ error: err.code });
+            }
         });
-
 });
 
 exports.api = functions.https.onRequest(app);
