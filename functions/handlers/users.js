@@ -94,7 +94,7 @@ exports.addUserDetails = (req, res) => {
     let userDetails = reduceUserDetails(req.body);
 
     db.doc(`/users/${req.user.handle}`)
-        .upload(userDetails)
+        .update(userDetails)
         .then(() => {
             return res.json({ message: 'Details added successfully' });
         })
