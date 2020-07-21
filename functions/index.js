@@ -22,6 +22,7 @@ const {
     getUserDetails,
     markNotificationsRead
 } = require('./handlers/users');
+
 const { firestore } = require('firebase-admin');
 
 
